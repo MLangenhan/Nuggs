@@ -1,21 +1,29 @@
-import { View, Text, StyleSheet, SafeAreaView, StatusBar, ScrollView, Pressable } from 'react-native'
-import React, { useState } from 'react'
-import { Link, useLocalSearchParams } from 'expo-router'
-import exercises from '../../assets/data/exercises.json'
+import { View, Text, StyleSheet, SafeAreaView, StatusBar, ScrollView, Pressable } from 'react-native';
+import React, { useState } from 'react';
+import { useRoute, RouteProp } from '@react-navigation/native';
+
+type ExerciseDetailsRouteParams = {
+    exercise: ExerciseItem;
+};
+
+interface ExerciseItem {
+    name: string;
+    type: string;
+    muscle: string;
+    equipment: string;
+    difficulty: string;
+    instructions: string;
+}
 
 export default function ExerciseDetailsScreen() {
-
-    const params = useLocalSearchParams();
-
-    const exercise = exercises.find(item => item.name === params.name);
+    const route = useRoute<RouteProp<{ params: ExerciseDetailsRouteParams }, 'params'>>();
+    const exercise = route.params?.exercise; // Now TypeScript knows exercise is of type ExerciseItem
 
     const [isInstructionExpanded, setIsInstructionExpanded] = useState(false);
 
     const toggleInstructionExpanded = () => {
         setIsInstructionExpanded(!isInstructionExpanded);
     }
-
-
 
     if (!exercise) {
         return (
@@ -38,11 +46,11 @@ export default function ExerciseDetailsScreen() {
             <ScrollView>
                 <Text style={styles.instructions} numberOfLines={isInstructionExpanded ? 0 : 3}>{exercise.instructions}</Text>
                 <Pressable onPress={toggleInstructionExpanded}>
-                    <Text style={styles.seeMore}>{isInstructionExpanded? "Show less" : "Show more"}</Text>
+                    <Text style={styles.seeMore}>{isInstructionExpanded ? "Show less" : "Show more"}</Text>
                 </Pressable>
             </ScrollView>
         </SafeAreaView>
-    )
+    );
 }
 
 const styles = StyleSheet.create({

@@ -1,10 +1,11 @@
 import React from 'react'
 import MyTabs from './MyTabs'
-import { StyleSheet } from 'react-native'
+import { NavigationContainer } from '@react-navigation/native';
+
 
 const index = () => {
   return (
-      <MyTabs />
+        <MyTabs />
   )
 }
 

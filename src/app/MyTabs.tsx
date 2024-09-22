@@ -1,13 +1,21 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import Tracker from './Tracker';
 import Dashboard from './Dashboard';
 import Settings from './Settings';
-import Ionicons from 'react-native-vector-icons/Ionicons'; // Import Ionicons from react-native-vector-icons
-import { NavigationContainer } from '@react-navigation/native';
+import ExerciseDetailsScreen from './[name]'; // Import the details screen
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import { RootStackParamList, TabParamList } from './Tracker'; // Adjust the import path
+import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
 
-const Tab = createBottomTabNavigator();
+const client = new QueryClient();
 
-export default function MyTabs() {
+const Stack = createNativeStackNavigator<RootStackParamList>();
+const Tab = createBottomTabNavigator<TabParamList>();
+
+// Tab Navigator
+function TabNavigator() {
+
     return (
         <Tab.Navigator
             screenOptions={({ route }) => ({
@@ -25,8 +33,8 @@ export default function MyTabs() {
                     return <Ionicons name={iconName} size={size} color={color} />;
                 },
                 tabBarStyle: {
-                    height: 80, // Customize the height of the tab bar
-                    paddingBottom: 30, // Optional: adjust padding
+                    height: 50, // Customize the height of the tab bar
+                    paddingBottom: 5, // Optional: adjust padding
                 },
                 tabBarLabelStyle: {
                     fontSize: 12, // Adjust font size of labels (optional)
@@ -37,5 +45,20 @@ export default function MyTabs() {
             <Tab.Screen name="Tracker" component={Tracker} options={{ headerShown: false }} />
             <Tab.Screen name="Settings" component={Settings} options={{ headerShown: false }} />
         </Tab.Navigator>
+    );
+}
+
+// Stack Navigator
+export default function MyTabs() {
+    return (
+        <QueryClientProvider client={client}>
+            <Stack.Navigator>
+                {/* Tabs as the main screen */}
+                <Stack.Screen name="Tabs" component={TabNavigator} options={{ headerShown: false }} />
+
+                {/* ExerciseDetailsScreen as a detailed screen */}
+                <Stack.Screen name="ExerciseDetails" component={ExerciseDetailsScreen} options={{ gestureEnabled: true, headerShown: false }} />
+            </Stack.Navigator>
+        </QueryClientProvider >
     );
 }

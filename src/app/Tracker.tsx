@@ -1,8 +1,47 @@
-import { SafeAreaView, Text, View, StyleSheet, FlatList } from "react-native";
-import exercises from '../../assets/data/exercises.json'
-import ExerciseListItem from "./ExerciseListItem";
+import { SafeAreaView, Text, View, StyleSheet, FlatList, ActivityIndicator } from "react-native";
+import exercises from '../../assets/data/exercises.json';
+import ExerciseListItem from "../components/ExerciseListItem";
+import { useNavigation, NavigatorScreenParams } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { useQuery } from '@tanstack/react-query'
+
+export type RootStackParamList = {
+  Tabs: NavigatorScreenParams<TabParamList>;
+  ExerciseDetails: { exercise: ExerciseItem };
+};
+
+// Define TabParamList if you have additional parameters for the Tab Navigator
+export type TabParamList = {
+  Dashboard: undefined;
+  Tracker: undefined;
+  Settings: undefined;
+};
+
+type TrackerNavigationProp = StackNavigationProp<RootStackParamList, 'Tabs'>;
+
+interface ExerciseItem {
+  name: string;
+  type: string;
+  muscle: string;
+  equipment: string;
+  difficulty: string;
+  instructions: string;
+}
 
 export default function Tracker() {
+  const navigation = useNavigation<TrackerNavigationProp>();
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['exercises'],
+    queryFn: async () => {
+      return exercises;
+    },
+  })
+
+  if (isLoading) {
+    return <ActivityIndicator />
+  }
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
@@ -14,10 +53,16 @@ export default function Tracker() {
       <View style={styles.separator} />
       <View style={styles.containerBig}>
         <FlatList
-          data={exercises}
+          data={data}
           contentContainerStyle={styles.FlatList}
           keyExtractor={(item, index) => item.name + index}
-          renderItem={({ item }) => <ExerciseListItem item={item} />} />
+          renderItem={({ item }) => (
+            <ExerciseListItem
+              item={item}
+              onPress={() => navigation.navigate('ExerciseDetails', { exercise: item })}
+            />
+          )}
+        />
       </View>
     </SafeAreaView>
   );
@@ -55,28 +100,5 @@ const styles = StyleSheet.create({
   },
   FlatList: {
     gap: 5,
-  },
-  exerciseContainer: {
-    backgroundColor: 'ghostwhite',
-    padding: 10,
-    borderRadius: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    gap: 5,
-
-    textShadowColor: '#000',
-    textShadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 1.41,
-  },
-  exerciseName: {
-    fontSize: 20,
-    fontWeight: '500',
-  },
-  exerciseSubtitle: {
-    color: 'dimgray',
   },
 });
