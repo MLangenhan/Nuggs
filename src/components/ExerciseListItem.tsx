@@ -18,7 +18,7 @@ interface ExerciseListItemProps {
 const ExerciseListItem = ({ item, onPress }: ExerciseListItemProps) => {
     return (
         <Pressable style={styles.exerciseContainer} onPress={onPress}>
-            <Text style={styles.exerciseName}>{item.name}</Text>
+            <Text style={styles.exerciseName}>{item.name.toUpperCase()}</Text>
             <Text style={styles.exerciseSubtitle}>
                 {item.muscle.toUpperCase()} | {item.equipment.toUpperCase()}
             </Text>

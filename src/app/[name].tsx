@@ -1,45 +1,77 @@
-import { View, Text, StyleSheet, SafeAreaView, StatusBar, ScrollView, Pressable } from 'react-native';
-import React, { useState } from 'react';
+import { View, Text, StyleSheet, SafeAreaView, StatusBar, ScrollView, Pressable, ActivityIndicator } from 'react-native';
 import { useRoute, RouteProp } from '@react-navigation/native';
+import { gql } from 'graphql-request';
+import { useQuery } from '@tanstack/react-query';
+import graphqlClient from '../graphqlClient';
+import React, { useState } from 'react';
 
-type ExerciseDetailsRouteParams = {
-    exercise: ExerciseItem;
-};
-
+// Define the shape of the exercise data returned by the API
 interface ExerciseItem {
     name: string;
-    type: string;
     muscle: string;
     equipment: string;
-    difficulty: string;
     instructions: string;
 }
 
-export default function ExerciseDetailsScreen() {
-    const route = useRoute<RouteProp<{ params: ExerciseDetailsRouteParams }, 'params'>>();
-    const exercise = route.params?.exercise; // Now TypeScript knows exercise is of type ExerciseItem
+interface ExerciseData {
+    exercises: ExerciseItem[];
+}
 
+const exerciseQuery = gql`
+    query exercises($name: String) {
+        exercises(name: $name) {
+            name
+            muscle
+            equipment
+            instructions
+        }
+    }
+`;
+
+export default function ExerciseDetailsScreen() {
+    const route = useRoute<RouteProp<{ ExerciseDetails: { name: string } }, 'ExerciseDetails'>>();
+    const { name } = route.params;
+
+    // Ensure hooks are called unconditionally
+    const { data, isLoading, error } = useQuery<ExerciseData>({
+        queryKey: ['exercises', name],
+        queryFn: () => graphqlClient.request<ExerciseData>(exerciseQuery, { name }),
+        staleTime: 1000 * 60,
+    });
+
+    // State for expanding instructions
     const [isInstructionExpanded, setIsInstructionExpanded] = useState(false);
+    
+    // Handle loading state
+    if (isLoading) {
+        return <ActivityIndicator />;
+    }
+
+    // Handle error state
+    if (error) {
+        return <Text>Error: {error.message}</Text>;
+    }
+
+    // Check if exercises data exists
+    const exercises = data?.exercises || [];
+    if (exercises.length === 0) {
+        return <Text>Exercise not found or no data available.</Text>;
+    }
+
+    // Destructure the exercise data
+    const exercise = exercises[0];
 
     const toggleInstructionExpanded = () => {
-        setIsInstructionExpanded(!isInstructionExpanded);
-    }
-
-    if (!exercise) {
-        return (
-            <Text>
-                Exercise not found.
-            </Text>
-        )
-    }
+        setIsInstructionExpanded((prev) => !prev);
+    };
 
     return (
         <SafeAreaView style={styles.safeArea}>
             <StatusBar barStyle="dark-content" />
             <View style={styles.container}>
                 <View>
-                    <Text style={styles.title}>{exercise.name}</Text>
-                    <Text style={styles.subtitle}>{exercise.muscle.toUpperCase()} | {exercise.equipment.toUpperCase()} </Text>
+                    <Text style={styles.title}>{exercise.name.toUpperCase()}</Text>
+                    <Text style={styles.subtitle}>{exercise.muscle.toUpperCase()} | {exercise.equipment.toUpperCase()}</Text>
                 </View>
             </View>
             <View style={styles.separator}></View>
@@ -77,38 +109,6 @@ const styles = StyleSheet.create({
         borderBottomColor: 'black',
         borderBottomWidth: StyleSheet.hairlineWidth,
     },
-    containerBig: {
-        flex: 1,
-        backgroundColor: 'ghostwhite',
-        justifyContent: 'center',
-        padding: 10,
-    },
-    FlatList: {
-        gap: 5,
-    },
-    exerciseContainer: {
-        backgroundColor: 'ghostwhite',
-        padding: 10,
-        borderRadius: 10,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        gap: 5,
-
-        textShadowColor: '#000',
-        textShadowOffset: {
-            width: 0,
-            height: 1,
-        },
-        shadowOpacity: 0.2,
-        shadowRadius: 1.41,
-    },
-    exerciseName: {
-        fontSize: 20,
-        fontWeight: '500',
-    },
-    exerciseSubtitle: {
-        color: 'dimgray',
-    },
     instructions: {
         marginTop: 20,
         fontSize: 18,
@@ -120,8 +120,8 @@ const styles = StyleSheet.create({
         alignSelf: 'flex-end',
         paddingVertical: 10,
         paddingHorizontal: 30,
-        fontWeight: 500,
+        fontWeight: '500',
         fontSize: 16,
         color: 'rgb(10, 132, 255)',
-    }
+    },
 });

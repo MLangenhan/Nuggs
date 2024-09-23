@@ -1,13 +1,14 @@
 import { SafeAreaView, Text, View, StyleSheet, FlatList, ActivityIndicator } from "react-native";
-import exercises from '../../assets/data/exercises.json';
 import ExerciseListItem from "../components/ExerciseListItem";
 import { useNavigation, NavigatorScreenParams } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { useQuery } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query';
+import { gql } from 'graphql-request';
+import client from '../graphqlClient';
 
 export type RootStackParamList = {
   Tabs: NavigatorScreenParams<TabParamList>;
-  ExerciseDetails: { exercise: ExerciseItem };
+  ExerciseDetails: { name: string };  // Update type to pass just the name
 };
 
 // Define TabParamList if you have additional parameters for the Tab Navigator
@@ -28,18 +29,36 @@ interface ExerciseItem {
   instructions: string;
 }
 
+interface ExercisesResponse {
+  exercises: ExerciseItem[];
+}
+
 export default function Tracker() {
   const navigation = useNavigation<TrackerNavigationProp>();
 
-  const { data, isLoading } = useQuery({
+  const exercisesQuery = gql`
+  query exercises($muscle: String, $name: String) {
+    exercises(muscle: $muscle, name: $name) {
+      name
+      muscle
+      equipment
+    }
+  }
+  `;
+
+  const { data, isLoading, error } = useQuery<ExercisesResponse>({
     queryKey: ['exercises'],
     queryFn: async () => {
-      return exercises;
+      return client.request(exercisesQuery);
     },
-  })
+  });
 
   if (isLoading) {
-    return <ActivityIndicator />
+    return <ActivityIndicator />;
+  }
+
+  if (error) {
+    return <Text>Error message!!</Text>;
   }
 
   return (
@@ -53,13 +72,13 @@ export default function Tracker() {
       <View style={styles.separator} />
       <View style={styles.containerBig}>
         <FlatList
-          data={data}
+          data={data?.exercises}
           contentContainerStyle={styles.FlatList}
           keyExtractor={(item, index) => item.name + index}
           renderItem={({ item }) => (
             <ExerciseListItem
               item={item}
-              onPress={() => navigation.navigate('ExerciseDetails', { exercise: item })}
+              onPress={() => navigation.navigate('ExerciseDetails', { name: item.name })} // Pass name here
             />
           )}
         />
