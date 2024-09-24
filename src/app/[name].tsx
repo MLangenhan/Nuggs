@@ -4,6 +4,7 @@ import { gql } from 'graphql-request';
 import { useQuery } from '@tanstack/react-query';
 import graphqlClient from '../graphqlClient';
 import React, { useState } from 'react';
+import NewSetInput from '../components/NewSetInput';
 
 // Define the shape of the exercise data returned by the API
 interface ExerciseItem {
@@ -81,13 +82,14 @@ export default function ExerciseDetailsScreen() {
                     <Text style={styles.seeMore}>{isInstructionExpanded ? "Show less" : "Show more"}</Text>
                 </Pressable>
             </ScrollView>
+
+            <NewSetInput />
         </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
     safeArea: {
-        flex: 1,
         backgroundColor: "#fff",
     },
     container: {
